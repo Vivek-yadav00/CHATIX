@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CHATIX{% endblock %}</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+        }
+        .navbar-brand {
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar navbar-expand-lg" style="background-color:#FFD700;">
+    <div class="container">
+
+        <a class="navbar-brand fw-bold" href="{% url 'index' %}">CHATIX</a>
+
+        <div class="d-flex align-items-center gap-3">
+
+            {% if user.is_authenticated %}
+
+                <!-- Profile Image -->
+                {% if user.userinfo.image %}
+                    <img src="{{ user.userinfo.image.url }}"
+                         alt="profile"
+                         style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                {% else %}
+                    <div style="width:32px;height:32px;border-radius:50%;background:#ccc;"></div>
+                {% endif %}
+
+                <span class="fw-semibold">
+                    Welcome {{ user.username }}
+                </span>
+
+                <a href="{% url 'logout' %}" class="btn btn-outline-dark btn-sm">
+                    Logout
+                </a>
+
+            {% else %}
+
+                {% if request.resolver_match.url_name == 'login' %}
+                    <a href="{% url 'register' %}" class="btn btn-outline-dark btn-sm">
+                        Create Account
+                    </a>
+                {% elif request.resolver_match.url_name == 'register' %}
+                    <a href="{% url 'login' %}" class="btn btn-outline-dark btn-sm">
+                        Login
+                    </a>
+                {% endif %}
+
+            {% endif %}
+
+        </div>
+    </div>
+</nav>
+
+<!-- ================= PAGE CONTENT ================= -->
+<div class="container mt-4">
+    {% block content %}{% endblock %}
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ================= SWEETALERT MESSAGES ================= -->
+{% if messages %}
+<script>
+    {% for message in messages %}
+        Swal.fire({
+            icon: "{{ message.tags|default:'info' }}",
+            title: "{{ message|escapejs }}",
+            timer: 2000,
+            showConfirmButton: false
+        });
+    {% endfor %}
+</script>
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,130 @@
+{% extends 'chatix/base.html' %}
+
+{% block title %}Chats{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 950px;">
+
+    <!-- HEADER -->
+    <div class="text-center mb-4">
+        <h2 class="fw-bold" style="color:#cc9900;">
+            Welcome, {{ request.user.username }}
+        </h2>
+        <p class="text-muted">
+            Your conversations
+        </p>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form action="{% url 'search' %}" method="get" class="input-group">
+                <input
+                    type="text"
+                    name="q"
+                    class="form-control"
+                    placeholder="Search users by username, name, or email"
+                    autocomplete="off"
+                >
+                <button class="btn btn-yellow px-4 fw-semibold">
+                    🔍 Search
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CHAT LIST -->
+    <h5 class="fw-semibold mb-3" style="color:#cc9900;">
+        Your Chats
+    </h5>
+
+    {% if chatrooms %}
+        <div class="row g-4">
+            {% for room in chatrooms %}
+                <div class="col-md-6">
+
+                    <div class="card border-0 shadow-sm h-100 rounded-3">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+
+                            <!-- INFO -->
+                            <div>
+                                <h6 class="fw-bold mb-1">
+                                    {{ room.name }}
+                                </h6>
+                                <small class="text-muted">
+                                    {% for u in room.participants.all %}
+                                        {{ u.username }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </small>
+                            </div>
+
+                            <!-- ACTIONS -->
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'chatroom' room.id %}"
+                                   class="btn btn-sm btn-outline-warning fw-semibold">
+                                    Open
+                                </a>
+
+                                <button
+                                    class="btn btn-sm btn-outline-danger delete-room"
+                                    data-id="{{ room.id }}"
+                                    title="Delete chat for me">
+                                    🗑
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            {% endfor %}
+        </div>
+
+    {% else %}
+        <!-- EMPTY STATE -->
+        <div class="card border-0 shadow-sm text-center mt-4">
+            <div class="card-body py-5">
+                <h5>No chats yet</h5>
+                <p class="text-muted mb-3">
+                    Search for users and start chatting
+                </p>
+                <a href="{% url 'search' %}" class="btn btn-yellow">
+                    Start New Chat
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- ================= DELETE CHAT (FOR ME ONLY) ================= -->
+<script>
+document.querySelectorAll(".delete-room").forEach(btn => {
+    btn.onclick = function () {
+        const roomId = this.dataset.id;
+
+        Swal.fire({
+            title: "Delete chat?",
+            text: "This chat will be removed only for you.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: "Delete",
+            cancelButtonText: "Cancel"
+        }).then(result => {
+            if (result.isConfirmed) {
+                fetch(`/room/delete/${roomId}/`, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    }
+                }).then(() => {
+                    // 🔥 Remove card instantly
+                    btn.closest(".col-md-6").remove();
+                });
+            }
+        });
+    };
+});
+</script>
+{% endblock %}

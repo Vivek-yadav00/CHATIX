@@ -1,0 +1,101 @@
+{% extends 'chatix/base.html' %}
+
+{% block title %}Search Users{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 750px;">
+
+    <!-- 🔍 PAGE TITLE -->
+    <h2 class="mb-4 text-center fw-bold">Search Users</h2>
+
+    <!-- 🔍 SEARCH FORM -->
+    <form method="get" class="input-group mb-4 shadow-sm">
+        <input type="text"
+               name="q"
+               class="form-control"
+               placeholder="Search by username, name, or email..."
+               value="{{ query }}"
+               autofocus>
+        <button class="btn btn-yellow px-4" type="submit">
+            Search
+        </button>
+    </form>
+
+    {% if query %}
+        <h5 class="mb-3 text-muted">
+            Results for "<strong>{{ query }}</strong>"
+        </h5>
+
+        {% if users %}
+        <!-- ========================= -->
+        <!-- ✅ USERS FOUND (PRO UI) -->
+        <!-- ========================= -->
+        <div class="list-group shadow rounded">
+
+            {% for user in users %}
+            <div class="list-group-item py-3">
+                <div class="d-flex align-items-center justify-content-between">
+
+                    <!-- USER INFO -->
+                    <div class="d-flex align-items-center gap-3">
+
+                        {% if user.userinfo.image %}
+                            <img src="{{ user.userinfo.image.url }}"
+                                 class="rounded-circle"
+                                 style="width:50px;height:50px;object-fit:cover;">
+                        {% else %}
+                            <div class="rounded-circle bg-secondary"
+                                 style="width:50px;height:50px;"></div>
+                        {% endif %}
+
+                        <div>
+                            <div class="fw-semibold fs-6">
+                                {{ user.username }}
+                            </div>
+                            <div class="text-muted small">
+                                {{ user.email }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ACTION BUTTON -->
+                    <a href="{% url 'add_user_to_chatroom' user.id %}"
+                       class="btn btn-outline-warning btn-sm fw-semibold px-3">
+                        💬 Start Chat
+                    </a>
+
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+        <!-- ========================= -->
+        <!-- ❌ NO USERS FOUND (UNCHANGED LOGIC) -->
+        <!-- ========================= -->
+        <div class="mt-4 p-4 text-center rounded"
+             style="background:#fff; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
+
+            <h5 class="text-danger mb-2">No users found</h5>
+
+            <p class="text-muted mb-4">
+                We couldn’t find anyone matching
+                <strong>"{{ query }}"</strong>
+            </p>
+
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'index' %}" class="btn btn-outline-warning">
+                    ⬅ Back to Chat Rooms
+                </a>
+
+                <a href="{% url 'search' %}" class="btn btn-yellow">
+                    🔍 Search Again
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+
+</div>
+{% endblock %}

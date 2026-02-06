@@ -1,0 +1,113 @@
+{% extends 'chatix/base.html' %}
+
+{% block title %}{{ room.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 700px;">
+    <h2 class="mb-4 text-center" style="color: #cc9900;">Chat Room: {{ room.name }}</h2>
+
+    <!-- Chat Room Info -->
+    <p class="text-muted text-center mb-4">
+        Created on: {{ room.created_at|date:"M d, Y H:i" }}<br>
+        Participants:
+        {% for participant in room.participants.all %}
+        {{ participant.username }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    </p>
+
+    <!-- Messages Display -->
+    <div id="messages" class="mb-4 p-3 rounded" style="background-color: #f8f9fa; height: 300px; overflow-y: auto;">
+        {% if messages %}
+        {% for message in messages %}
+        <div
+            class="d-flex mb-4 {% if message.sender == request.user %}justify-content-end{% else %}justify-content-start{% endif %}">
+            <div
+                class="message-box {% if message.sender == request.user %}message-right{% else %}message-left{% endif %}">
+                <div>{{ message.content }}</div>
+
+                <div class="msg-info d-flex justify-content-between align-items-center">
+                    ~ {{ message.sender.username }}
+                    {% if message.sender == request.user or request.user.is_superuser %}
+                    <form action="{% url 'delete_message' message.id %}" method="post" class="ms-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Delete this message?');">🗑️</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% else %}
+        <p>No messages yet.</p>
+        {% endif %}
+    </div>
+
+
+    <!-- Send Message Form -->
+    <form class="input-group" id="chat-form">
+        {% csrf_token %}
+        <input type="text" id="message_input" name="content" class="form-control" placeholder="Type a message..."
+            required>
+        <button class="btn btn-yellow fw-semibold" type="submit" style="min-width: 100px;">Send</button>
+    </form>
+
+    <a href="{% url 'index' %}" class="btn btn-link mt-4">Back to Chat Rooms</a>
+</div>
+<script>
+    const roomId = "{{ room.id }}";
+    const username = "{{ request.user.username }}";
+
+    const messageDiv = document.getElementById("messages");
+    const input = document.getElementById("message_input");
+    const form = document.getElementById("chat-form");
+
+    const socket = new WebSocket(
+        "ws://" + window.location.host + "/ws/chat/" + roomId + "/"
+    );
+
+    socket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("d-flex", "mb-3");
+
+        if (data.sender === username) {
+            wrapper.classList.add("justify-content-end");
+        } else {
+            wrapper.classList.add("justify-content-start");
+        }
+
+        const box = document.createElement("div");
+        box.classList.add(
+            "message-box",
+            data.sender === username ? "message-right" : "message-left"
+        );
+
+        box.innerHTML = `
+            <div>${data.message}</div>
+            <div class="msg-info">~ ${data.sender}</div>
+        `;
+
+        wrapper.appendChild(box);
+        messageDiv.appendChild(wrapper);
+        messageDiv.scrollTop = messageDiv.scrollHeight;
+    };
+
+    form.onsubmit = function (e) {
+        e.preventDefault();
+
+        if (!input.value.trim()) return;
+
+        socket.send(JSON.stringify({
+            message: input.value,
+            sender: username,
+            room_id: roomId
+        }));
+
+        input.value = "";
+    };
+</script>
+
+{% endblock %}
