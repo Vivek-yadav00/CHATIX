@@ -23,7 +23,8 @@ urlpatterns = [
     path("add-user/<int:user_id>/", add_user_to_chatroom, name="add_user_to_chatroom"),
 
     path("room/delete/<int:room_id>/", delete_chatroom, name="delete_chatroom"),
-    path("message/delete/<int:message_id>/", delete_message, name="delete_message"),
+    path("delete-message/<int:msg_id>/", delete_message, name="delete_message"),
+
 ]
 
 

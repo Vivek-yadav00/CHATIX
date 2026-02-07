@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,83 +13,195 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
+        /* ================= BASE ================= */
         body {
             background-color: #f0f2f5;
             font-family: Arial, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
         }
-        .navbar-brand {
-            letter-spacing: 1px;
+
+        body.dark-mode {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        /* ================= TEXT ================= */
+        body.dark-mode h1,
+        body.dark-mode h2,
+        body.dark-mode h3,
+        body.dark-mode h4,
+        body.dark-mode h5 {
+            color: #ffffff;
+        }
+
+        body.dark-mode .text-muted {
+            color: #aaaaaa;
+        }
+
+        /* ================= CONTAINERS ================= */
+        body.dark-mode .container,
+        body.dark-mode .card {
+            background-color: #1e1e1e;
+            box-shadow: none;
+        }
+
+        /* ================= INPUTS ================= */
+        body.dark-mode input,
+        body.dark-mode textarea,
+        body.dark-mode select {
+            background-color: #2a2a2a;
+            color: #ffffff;
+            border: 1px solid #444;
+        }
+
+        body.dark-mode input::placeholder {
+            color: #bbbbbb;
+        }
+
+        /* ================= NAVBAR ================= */
+        nav {
+            background-color: #FFD700;
+        }
+
+        body.dark-mode nav {
+            background-color: #1a1a1a;
+        }
+
+        /* ================= BUTTONS ================= */
+        .btn {
+            color: inherit;
+        }
+
+        body.dark-mode .btn-warning {
+            background-color: #f1c40f;
+            color: #000;
+        }
+
+        body.dark-mode .btn-outline-dark {
+            border-color: #f1c40f;
+            color: #f1c40f;
+        }
+
+        body.dark-mode .btn-outline-dark:hover {
+            background-color: #f1c40f;
+            color: #000;
+        }
+
+        body.dark-mode a {
+            color: #f1c40f;
+        }
+
+        /* ================= SWEETALERT ================= */
+        body.dark-mode .swal2-popup {
+            background: #1e1e1e;
+            color: #ffffff;
+        }
+
+        /* ================= DARK MODE FORCE TEXT FIX ================= */
+
+        /* INPUT TEXT + PLACEHOLDER */
+        body.dark-mode input,
+        body.dark-mode textarea {
+            color: #ffffff !important;
+            background-color: #2a2a2a !important;
+        }
+
+        body.dark-mode input::placeholder {
+            color: #cccccc !important;
+        }
+
+        /* SEARCH BUTTON TEXT */
+        body.dark-mode button,
+        body.dark-mode .btn {
+            color: #ffffff !important;
+        }
+
+        /* SEARCH ICON / EMOJI */
+        body.dark-mode .btn span,
+        body.dark-mode .btn i {
+            color: #ffffff !important;
+        }
+
+        /* CHAT LIST TEXT */
+        body.dark-mode h5,
+        body.dark-mode h6,
+        body.dark-mode p,
+        body.dark-mode small {
+            color: #e0e0e0 !important;
         }
     </style>
 </head>
+
 <body>
 
-<!-- ================= NAVBAR ================= -->
-<nav class="navbar navbar-expand-lg" style="background-color:#FFD700;">
-    <div class="container">
+    <!-- ================= NAVBAR ================= -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
 
-        <a class="navbar-brand fw-bold" href="{% url 'index' %}">CHATIX</a>
+            <a class="navbar-brand fw-bold" href="{% url 'index' %}">CHATIX</a>
 
-        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-3">
 
-            {% if user.is_authenticated %}
-
-                <!-- Profile Image -->
+                {% if user.is_authenticated %}
                 {% if user.userinfo.image %}
-                    <img src="{{ user.userinfo.image.url }}"
-                         alt="profile"
-                         style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                <img src="{{ user.userinfo.image.url }}"
+                    style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
                 {% else %}
-                    <div style="width:32px;height:32px;border-radius:50%;background:#ccc;"></div>
+                <div style="width:32px;height:32px;border-radius:50%;background:#ccc;"></div>
                 {% endif %}
 
-                <span class="fw-semibold">
-                    Welcome {{ user.username }}
-                </span>
+                <span class="fw-semibold">Welcome {{ user.username }}</span>
 
-                <a href="{% url 'logout' %}" class="btn btn-outline-dark btn-sm">
-                    Logout
-                </a>
-
-            {% else %}
-
+                <a href="{% url 'logout' %}" class="btn btn-outline-dark btn-sm">Logout</a>
+                {% else %}
                 {% if request.resolver_match.url_name == 'login' %}
-                    <a href="{% url 'register' %}" class="btn btn-outline-dark btn-sm">
-                        Create Account
-                    </a>
+                <a href="{% url 'register' %}" class="btn btn-outline-dark btn-sm">Create Account</a>
                 {% elif request.resolver_match.url_name == 'register' %}
-                    <a href="{% url 'login' %}" class="btn btn-outline-dark btn-sm">
-                        Login
-                    </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-dark btn-sm">Login</a>
+                {% endif %}
                 {% endif %}
 
-            {% endif %}
-
+                <button id="themeToggle" class="btn btn-outline-dark btn-sm">🌙</button>
+            </div>
         </div>
+    </nav>
+
+    <!-- ================= CONTENT ================= -->
+    <div class="container mt-4">
+        {% block content %}{% endblock %}
     </div>
-</nav>
 
-<!-- ================= PAGE CONTENT ================= -->
-<div class="container mt-4">
-    {% block content %}{% endblock %}
-</div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const toggleBtn = document.getElementById("themeToggle");
 
-<!-- ================= SWEETALERT MESSAGES ================= -->
-{% if messages %}
-<script>
-    {% for message in messages %}
+        if (localStorage.getItem("theme") === "dark") {
+            document.body.classList.add("dark-mode");
+            toggleBtn.textContent = "☀️";
+        }
+
+        toggleBtn.onclick = () => {
+            document.body.classList.toggle("dark-mode");
+            const dark = document.body.classList.contains("dark-mode");
+            localStorage.setItem("theme", dark ? "dark" : "light");
+            toggleBtn.textContent = dark ? "☀️" : "🌙";
+        };
+    </script>
+
+    {% if messages %}
+    <script>
+        {% for message in messages %}
         Swal.fire({
             icon: "{{ message.tags|default:'info' }}",
             title: "{{ message|escapejs }}",
             timer: 2000,
             showConfirmButton: false
         });
-    {% endfor %}
-</script>
-{% endif %}
+        {% endfor %}
+    </script>
+    {% endif %}
 
 </body>
+
 </html>

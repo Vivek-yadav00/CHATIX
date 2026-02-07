@@ -3,8 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse
 from django.db.models import Q
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 from .models import ChatRoom, Message, UserInfo
 
@@ -37,22 +39,61 @@ def Login(request):
 
 def register(request):
     if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
+        name = request.POST.get("name", "").strip()
+        email = request.POST.get("email", "").strip()
+        phone = request.POST.get("phone", "").strip()
+        image = request.FILES.get("image")
+
+        # ❌ Empty field check
+        if not all([username, password, name, email, phone]):
+            messages.error(request, "All fields are required")
+            return redirect("register")
+
+        # ❌ Username exists
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already registered")
+            return redirect("register")
+
+        # ❌ Email exists
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered")
+            return redirect("register")
+
+        # ❌ Phone exists
+        if UserInfo.objects.filter(phone=phone).exists():
+            messages.error(request, "Phone number already registered")
+            return redirect("register")
+
+        # ❌ Phone length check (MODEL SAFE)
+        if not phone.isdigit() or len(phone) != 10:
+            messages.error(request, "Phone number must be exactly 10 digits")
+            return redirect("register")
+
+        # ❌ Password length check
+        if len(password) < 6:
+            messages.error(request, "Password must be at least 6 characters long")
+            return redirect("register")
+
+        # ✅ Create User
         user = User.objects.create_user(
-            username=request.POST["username"],
-            password=request.POST["password"],
-            email=request.POST["email"]
+            username=username,
+            password=password,
+            email=email
         )
 
+        # ✅ Create UserInfo
         UserInfo.objects.create(
             user=user,
-            name=request.POST["name"],
-            email=request.POST["email"],
-            phone=request.POST["phone"],
-            image=request.FILES.get("image")
+            name=name,
+            email=email,
+            phone=phone,
+            image=image
         )
 
-        login(request, user)
-        return redirect("index")
+        messages.success(request, "Account created successfully. Please login.")
+        return redirect("login")
 
     return render(request, "chatix/register.html")
 
@@ -69,7 +110,7 @@ def index(request):
     chatrooms = ChatRoom.objects.filter(
         participants=request.user
     ).exclude(
-        hidden_for=request.user   # ✅ FIXED FIELD
+        hidden_for=request.user
     )
 
     return render(request, "chatix/index.html", {
@@ -106,9 +147,7 @@ def chatroom(request, id):
     if request.user not in room.participants.all():
         return redirect("index")
 
-    messages_qs = room.messages.exclude(
-        deleted_for=request.user   # ✅ CORRECT
-    )
+    messages_qs = room.messages.all()
 
     return render(request, "chatix/chatroom.html", {
         "room": room,
@@ -135,9 +174,7 @@ def add_user_to_chatroom(request, user_id):
         )
         chatroom.participants.add(sender, receiver)
 
-    # if chat was hidden earlier → restore
     chatroom.hidden_for.remove(sender)
-
     return redirect("chatroom", chatroom.id)
 
 
@@ -146,19 +183,32 @@ def add_user_to_chatroom(request, user_id):
 @login_required
 def delete_chatroom(request, room_id):
     room = get_object_or_404(ChatRoom, id=room_id)
-
     room.hidden_for.add(request.user)
     return JsonResponse({"status": "ok"})
 
 
-# ---------- DELETE MESSAGE (FOR ME ONLY) ----------
+# ---------- DELETE MESSAGE (FIXED & WORKING) ----------
 
 @login_required
-def delete_message(request, message_id):
-    message = get_object_or_404(Message, id=message_id)
+def delete_message(request, msg_id):
+    if request.method != "POST":
+        return JsonResponse({"status": "invalid"}, status=400)
 
-    if request.user != message.sender:
-        return HttpResponseForbidden()
+    msg = get_object_or_404(Message, id=msg_id)
 
-    message.deleted_for.add(request.user)
+    if msg.sender != request.user and not request.user.is_superuser:
+        return JsonResponse({"status": "forbidden"}, status=403)
+
+    room_id = msg.room.id
+    msg.delete()
+
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"chat_{room_id}",
+        {
+            "type": "message_deleted",
+            "message_id": msg_id,
+        }
+    )
+
     return JsonResponse({"status": "ok"})
