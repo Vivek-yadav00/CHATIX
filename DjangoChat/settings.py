@@ -6,8 +6,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 # ===============================
 SECRET_KEY = 'django-insecure-807*4@v7$ed108b@o1#4i4j#$@2-d%x4-^x3+n6&@p_e&qf8@z'
-DEBUG = True
-ALLOWED_HOSTS = ['*']
+DEBUG = False
+ALLOWED_HOSTS = ['*',  ".onrender.com"]
 
 # ===============================
 # APPLICATIONS
@@ -19,7 +19,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'chatix',
     'channels',
 ]
