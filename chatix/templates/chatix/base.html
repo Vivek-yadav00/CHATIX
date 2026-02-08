@@ -13,49 +13,53 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        /* ================= BASE ================= */
-        body {
-            background-color: #f0f2f5;
-            font-family: Arial, sans-serif;
-            transition: background-color 0.3s, color 0.3s;
+        /* ================= THEME VARIABLES ================= */
+        /* ================= THEME VARIABLES ================= */
+        :root {
+            --bg: #f0f2f5;
+            --text: #000000;
+            --muted: #6c757d;
+            --card: #ffffff;
+            --input-bg: #ffffff;
+            --border: #ced4da;
+            --accent: #f1c40f;
         }
 
         body.dark-mode {
-            background-color: #121212;
-            color: #e0e0e0;
+            --bg: #121212;
+            --text: #ffffff;
+            --muted: #b0b0b0;
+            --card: #1e1e1e;
+            --input-bg: #2a2a2a;
+            --border: #444;
         }
 
-        /* ================= TEXT ================= */
-        body.dark-mode h1,
-        body.dark-mode h2,
-        body.dark-mode h3,
-        body.dark-mode h4,
-        body.dark-mode h5 {
-            color: #ffffff;
+        /* ================= BASE ================= */
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: Arial, sans-serif;
         }
 
-        body.dark-mode .text-muted {
-            color: #aaaaaa;
+        /* ================= TEXT ELEMENTS ================= */
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p,
+        span,
+        small,
+        label,
+        a,
+        li,
+        div {
+            color: var(--text);
         }
 
-        /* ================= CONTAINERS ================= */
-        body.dark-mode .container,
-        body.dark-mode .card {
-            background-color: #1e1e1e;
-            box-shadow: none;
-        }
-
-        /* ================= INPUTS ================= */
-        body.dark-mode input,
-        body.dark-mode textarea,
-        body.dark-mode select {
-            background-color: #2a2a2a;
-            color: #ffffff;
-            border: 1px solid #444;
-        }
-
-        body.dark-mode input::placeholder {
-            color: #bbbbbb;
+        .text-muted {
+            color: var(--muted) !important;
         }
 
         /* ================= NAVBAR ================= */
@@ -67,28 +71,65 @@
             background-color: #1a1a1a;
         }
 
+        /* ================= CARDS ================= */
+        .card,
+        .container {
+            background-color: var(--card);
+        }
+
+        /* ================= FORMS ================= */
+        input,
+        textarea,
+        select {
+            background-color: var(--input-bg) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--border) !important;
+        }
+
+        ::placeholder {
+            color: var(--muted) !important;
+        }
+
+        /* Autofill fix */
+        input:-webkit-autofill {
+            -webkit-text-fill-color: var(--text) !important;
+            box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+        }
+
+        /* File input */
+        input[type="file"] {
+            color: var(--text) !important;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+        }
+
         /* ================= BUTTONS ================= */
         .btn {
-            color: inherit;
+            color: var(--text);
         }
 
-        body.dark-mode .btn-warning {
-            background-color: #f1c40f;
+        .btn-warning {
+            background-color: var(--accent);
             color: #000;
         }
 
-        body.dark-mode .btn-outline-dark {
-            border-color: #f1c40f;
-            color: #f1c40f;
+        .btn-outline-dark {
+            border-color: var(--accent);
+            color: var(--accent);
         }
 
-        body.dark-mode .btn-outline-dark:hover {
-            background-color: #f1c40f;
+        .btn-outline-dark:hover {
+            background-color: var(--accent);
             color: #000;
         }
 
-        body.dark-mode a {
-            color: #f1c40f;
+        /* ================= LINKS ================= */
+        a {
+            color: var(--accent);
         }
 
         /* ================= SWEETALERT ================= */
@@ -97,37 +138,18 @@
             color: #ffffff;
         }
 
-        /* ================= DARK MODE FORCE TEXT FIX ================= */
-
-        /* INPUT TEXT + PLACEHOLDER */
-        body.dark-mode input,
-        body.dark-mode textarea {
-            color: #ffffff !important;
-            background-color: #2a2a2a !important;
+        .card {
+            background-color: var(--card) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
         }
 
-        body.dark-mode input::placeholder {
-            color: #cccccc !important;
+        .card * {
+            color: var(--text) !important;
         }
 
-        /* SEARCH BUTTON TEXT */
-        body.dark-mode button,
-        body.dark-mode .btn {
-            color: #ffffff !important;
-        }
-
-        /* SEARCH ICON / EMOJI */
-        body.dark-mode .btn span,
-        body.dark-mode .btn i {
-            color: #ffffff !important;
-        }
-
-        /* CHAT LIST TEXT */
-        body.dark-mode h5,
-        body.dark-mode h6,
-        body.dark-mode p,
-        body.dark-mode small {
-            color: #e0e0e0 !important;
+        .logo{
+            color: rgb(66, 234, 20);
         }
     </style>
 </head>
@@ -137,11 +159,9 @@
     <!-- ================= NAVBAR ================= -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-
-            <a class="navbar-brand fw-bold" href="{% url 'index' %}">CHATIX</a>
+            <a class="navbar-brand fw-bold" "><h5 class="logo">CHATIX</h5></a>
 
             <div class="d-flex align-items-center gap-3">
-
                 {% if user.is_authenticated %}
                 {% if user.userinfo.image %}
                 <img src="{{ user.userinfo.image.url }}"
@@ -151,7 +171,6 @@
                 {% endif %}
 
                 <span class="fw-semibold">Welcome {{ user.username }}</span>
-
                 <a href="{% url 'logout' %}" class="btn btn-outline-dark btn-sm">Logout</a>
                 {% else %}
                 {% if request.resolver_match.url_name == 'login' %}
