@@ -148,3 +148,9 @@ websockets==15.0.1
 whitenoise==6.11.0
 zipp==3.23.0
 
+# ===== PRODUCTION DEPENDENCIES =====
+dj-database-url==2.1.0
+psycopg2-binary==2.9.9
+channels_redis==4.2.0
+daphne==4.0.0
+gunicorn==21.2.0
