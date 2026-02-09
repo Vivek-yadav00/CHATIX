@@ -147,7 +147,7 @@ def chatroom(request, id):
     if request.user not in room.participants.all():
         return redirect("index")
 
-    messages_qs = room.messages.all()
+    messages_qs = room.messages.all().exclude(deleted_for=request.user)
 
     return render(request, "chatix/chatroom.html", {
         "room": room,
@@ -184,6 +184,11 @@ def add_user_to_chatroom(request, user_id):
 def delete_chatroom(request, room_id):
     room = get_object_or_404(ChatRoom, id=room_id)
     room.hidden_for.add(request.user)
+    
+    # Also hide all messages for this user
+    for msg in room.messages.all():
+        msg.deleted_for.add(request.user)
+
     return JsonResponse({"status": "ok"})
 
 
@@ -199,7 +204,7 @@ def delete_message(request, msg_id):
     if msg.sender != request.user and not request.user.is_superuser:
         return JsonResponse({"status": "forbidden"}, status=403)
 
-    room_id = msg.room.id
+    room_id = msg.chatroom.id
     msg.delete()
 
     channel_layer = get_channel_layer()

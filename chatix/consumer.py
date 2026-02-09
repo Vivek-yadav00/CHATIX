@@ -47,6 +47,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user = await self.get_user(sender)
         await self.save_message(room, user, message)
 
+        # 🔥 UNHIDE ROOM & NOTIFY PARTICIPANTS
+        participants = await self.get_participants(room)
+        for p in participants:
+            if p != user:  # Don't notify sender, but ensure room is visible
+                await self.unhide_room_for_user(room, p)
+                
+                await self.channel_layer.group_send(
+                    f"user_{p.id}",
+                    {
+                        "type": "chat_notification",
+                        "room_id": self.room_id,
+                        "room_name": room.name,
+                        "sender": sender,
+                        "message": message,
+                    }
+                )
+        
+        # Ensure visible for sender too (if they deleted it previously)
+        await self.unhide_room_for_user(room, user)
+
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -101,8 +121,41 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def room_exists(self, room_id):
         from .models import ChatRoom
         return ChatRoom.objects.filter(id=room_id).exists()
+    
+    @database_sync_to_async
+    def get_participants(self, room):
+        return list(room.participants.all())
 
     @database_sync_to_async
     def get_user(self, username):
         from django.contrib.auth.models import User
         return User.objects.get(username=username)
+
+    @database_sync_to_async
+    def unhide_room_for_user(self, room, user):
+        room.hidden_for.remove(user)
+
+
+class DashboardConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope["user"]
+        if not self.user.is_authenticated:
+            await self.close()
+            return
+
+        self.group_name = f"user_{self.user.id}"
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        if self.user.is_authenticated:
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def chat_notification(self, event):
+        await self.send(json.dumps({
+            "type": "notification",
+            "room_id": event["room_id"],
+            "room_name": event["room_name"],
+            "sender": event["sender"],
+            "message": event["message"]
+        }))

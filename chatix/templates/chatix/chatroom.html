@@ -77,23 +77,23 @@
         Created on: {{ room.created_at|localtime|date:"M d, Y h:i A" }}<br>
         Participants:
         {% for p in room.participants.all %}
-            {{ p.username }}{% if not forloop.last %}, {% endif %}
+        {{ p.username }}{% if not forloop.last %}, {% endif %}
         {% endfor %}
     </p>
 
     <div id="messages" class="chat-box">
         {% for message in messages %}
-            <div id="message-{{ message.id }}"
-                 class="chat-bubble {% if message.sender == request.user %}me{% else %}other{% endif %}">
-                {{ message.content }}
-                <div class="chat-time">
-                    {{ message.created_at|localtime|date:"h:i A" }}
-                </div>
-
-                {% if message.sender == request.user %}
-                    <button class="chat-delete" onclick="deleteMessage({{ message.id }})">🗑</button>
-                {% endif %}
+        <div id="message-{{ message.id }}"
+            class="chat-bubble {% if message.sender == request.user %}me{% else %}other{% endif %}">
+            {{ message.content }}
+            <div class="chat-time">
+                {{ message.created_at|localtime|date:"h:i A" }}
             </div>
+
+            {% if message.sender == request.user %}
+            <button class="chat-delete" onclick="deleteMessage({{ message.id }})">🗑</button>
+            {% endif %}
+        </div>
         {% endfor %}
     </div>
 
@@ -107,48 +107,81 @@
 </div>
 
 <script>
-const roomId = "{{ room.id }}";
-const username = "{{ request.user.username }}";
+    const roomId = "{{ room.id }}";
+    const username = "{{ request.user.username }}";
 
-const messageDiv = document.getElementById("messages");
-const input = document.getElementById("message_input");
-const form = document.getElementById("chat-form");
+    const messageDiv = document.getElementById("messages");
+    const input = document.getElementById("message_input");
+    const form = document.getElementById("chat-form");
 
-const socket = new WebSocket(
-    "ws://" + window.location.host + "/ws/chat/" + roomId + "/"
-);
+    const socket = new WebSocket(
+        "ws://" + window.location.host + "/ws/chat/" + roomId + "/"
+    );
 
-socket.onmessage = e => {
-    const data = JSON.parse(e.data);
+    socket.onmessage = e => {
+        const data = JSON.parse(e.data);
 
-    if (data.type === "message_deleted") {
-        document.getElementById(`message-${data.message_id}`)?.remove();
-        return;
-    }
+        if (data.type === "message_deleted") {
+            document.getElementById(`message-${data.message_id}`)?.remove();
+            return;
+        }
 
-    const bubble = document.createElement("div");
-    bubble.id = `message-${data.message_id}`;
-    bubble.className = "chat-bubble " + (data.sender === username ? "me" : "other");
+        const bubble = document.createElement("div");
+        bubble.id = `message-${data.message_id}`;
+        bubble.className = "chat-bubble " + (data.sender === username ? "me" : "other");
 
-    bubble.innerHTML = `
+        let deleteBtn = "";
+        if (data.sender === username) {
+            deleteBtn = `<button class="chat-delete" onclick="deleteMessage(${data.message_id})">🗑</button>`;
+        }
+
+        bubble.innerHTML = `
         ${data.message}
-        <div class="chat-time">${data.time || ""}</div>
+        <div class="chat-time">${data.time || "Just now"}</div>
+        ${deleteBtn}
     `;
 
-    messageDiv.appendChild(bubble);
-    messageDiv.scrollTop = messageDiv.scrollHeight;
-};
+        messageDiv.appendChild(bubble);
+        messageDiv.scrollTop = messageDiv.scrollHeight;
+    };
 
-form.onsubmit = e => {
-    e.preventDefault();
-    if (!input.value.trim()) return;
+    form.onsubmit = e => {
+        e.preventDefault();
+        if (!input.value.trim()) return;
 
-    socket.send(JSON.stringify({
-        message: input.value,
-        sender: username,
-        room_id: roomId
-    }));
-    input.value = "";
-};
+        socket.send(JSON.stringify({
+            message: input.value,
+            sender: username,
+            room_id: roomId
+        }));
+        input.value = "";
+    };
+
+    function deleteMessage(msgId) {
+        Swal.fire({
+            title: "Delete Message?",
+            text: "This will remove the message for everyone.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: "Yes, delete it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/delete-message/${msgId}/`, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    }
+                }).then(res => {
+                    if (res.ok) {
+                        // Message will be removed via WebSocket
+                    } else {
+                        Swal.fire("Error", "Failed to delete message", "error");
+                    }
+                });
+            }
+        });
+    }
 </script>
 {% endblock %}
