@@ -36,6 +36,13 @@ class ChatRoom(models.Model):
         blank=True
     )
 
+    # ⭐ Favorites
+    favorited_by = models.ManyToManyField(
+        User,
+        related_name="favorite_chatrooms",
+        blank=True
+    )
+
     def is_visible_for(self, user):
         """Check if room is visible for a user"""
         return user not in self.hidden_for.all()

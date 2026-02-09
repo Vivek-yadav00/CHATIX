@@ -3,98 +3,82 @@
 {% block title %}Search Users{% endblock %}
 
 {% block content %}
-<div class="container mt-5" style="max-width: 750px;">
+<div class="container py-5" style="max-width: 800px;">
 
-    <!-- 🔍 PAGE TITLE -->
-    <h2 class="mb-4 text-center fw-bold">Search Users</h2>
+    <!-- HEADER -->
+    <div class="mb-5 position-relative">
+        <a href="{% url 'index' %}"
+            class="btn btn-outline-secondary btn-sm position-absolute top-0 start-0 translate-middle-y mt-1">
+            &larr; Back
+        </a>
+        <div class="text-center pt-4">
+            <h2 class="fw-bold mb-3">Find People</h2>
+            <p class="text-muted">Search for users by username, name, or email to start chatting.</p>
+        </div>
+    </div>
 
-    <!-- 🔍 SEARCH FORM -->
-    <form method="get" class="input-group mb-4 shadow-sm">
-        <input type="text"
-               name="q"
-               class="form-control"
-               placeholder="Search by username, name, or email..."
-               value="{{ query }}"
-               autofocus>
-        <button class="btn btn-yellow px-4" type="submit">
-            Search
-        </button>
-    </form>
+    <!-- SEARCH FORM -->
+    <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden">
+        <div class="card-body p-2">
+            <form method="get" class="d-flex align-items-center">
+                <div class="ps-3 text-muted">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+                <input type="text" name="q" class="form-control form-control-lg border-0 shadow-none ps-3"
+                    placeholder="Type a username..." value="{{ query }}" autofocus style="font-size: 1.1rem;">
+                <button class="btn btn-warning fw-bold px-4 rounded-3 m-1" type="submit">
+                    Search
+                </button>
+            </form>
+        </div>
+    </div>
 
     {% if query %}
-        <h5 class="mb-3 text-muted">
-            Results for "<strong>{{ query }}</strong>"
-        </h5>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="fw-bold mb-0">Results for "{{ query }}"</h5>
+        <small class="text-muted">{{ users|length }} found</small>
+    </div>
 
-        {% if users %}
-        <!-- ========================= -->
-        <!-- ✅ USERS FOUND (PRO UI) -->
-        <!-- ========================= -->
-        <div class="list-group shadow rounded">
+    {% if users %}
+    <div class="list-group shadow-sm rounded-4 overflow-hidden border-0">
+        {% for user in users %}
+        <div
+            class="list-group-item p-3 border-light list-group-item-action d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                {% if user.userinfo.image %}
+                <img src="{{ user.userinfo.image.url }}" class="rounded-circle object-fit-cover shadow-sm"
+                    style="width: 50px; height: 50px;">
+                {% else %}
+                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm"
+                    style="width: 50px; height: 50px; background: linear-gradient(135deg, #6c5ce7, #a29bfe);">
+                    {{ user.username|slice:":1"|upper }}
+                </div>
+                {% endif %}
 
-            {% for user in users %}
-            <div class="list-group-item py-3">
-                <div class="d-flex align-items-center justify-content-between">
-
-                    <!-- USER INFO -->
-                    <div class="d-flex align-items-center gap-3">
-
-                        {% if user.userinfo.image %}
-                            <img src="{{ user.userinfo.image.url }}"
-                                 class="rounded-circle"
-                                 style="width:50px;height:50px;object-fit:cover;">
-                        {% else %}
-                            <div class="rounded-circle bg-secondary"
-                                 style="width:50px;height:50px;"></div>
-                        {% endif %}
-
-                        <div>
-                            <div class="fw-semibold fs-6">
-                                {{ user.username }}
-                            </div>
-                            <div class="text-muted small">
-                                {{ user.email }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ACTION BUTTON -->
-                    <a href="{% url 'add_user_to_chatroom' user.id %}"
-                       class="btn btn-outline-warning btn-sm fw-semibold px-3">
-                        💬 Start Chat
-                    </a>
-
+                <div>
+                    <h6 class="fw-bold mb-0">{{ user.username }}</h6>
+                    <small class="text-muted">{{ user.email }}</small>
                 </div>
             </div>
-            {% endfor %}
 
+            <a href="{% url 'add_user_to_chatroom' user.id %}"
+                class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-semibold">
+                Message
+            </a>
         </div>
-
-        {% else %}
-        <!-- ========================= -->
-        <!-- ❌ NO USERS FOUND (UNCHANGED LOGIC) -->
-        <!-- ========================= -->
-        <div class="mt-4 p-4 text-center rounded"
-             style="background:#fff; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
-
-            <h5 class="text-danger mb-2">No users found</h5>
-
-            <p class="text-muted mb-4">
-                We couldn’t find anyone matching
-                <strong>"{{ query }}"</strong>
-            </p>
-
-            <div class="d-flex justify-content-center gap-3">
-                <a href="{% url 'index' %}" class="btn btn-outline-warning">
-                    ⬅ Back to Chat Rooms
-                </a>
-
-                <a href="{% url 'search' %}" class="btn btn-yellow">
-                    🔍 Search Again
-                </a>
-            </div>
-        </div>
-        {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <div class="mb-3 text-muted" style="font-size: 3rem; opacity: 0.3;">¯\_(ツ)_/¯</div>
+        <h5 class="fw-bold">No users found</h5>
+        <p class="text-muted">Try checking the spelling or search for a different name.</p>
+    </div>
+    {% endif %}
     {% endif %}
 
 </div>

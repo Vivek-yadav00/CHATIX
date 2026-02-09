@@ -9,6 +9,9 @@
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -16,29 +19,32 @@
         /* ================= THEME VARIABLES ================= */
         /* ================= THEME VARIABLES ================= */
         :root {
-            --bg: #f0f2f5;
-            --text: #000000;
+            --bg: #f8f9fa;
+            --text: #212529;
             --muted: #6c757d;
             --card: #ffffff;
             --input-bg: #ffffff;
-            --border: #ced4da;
+            --border: #e9ecef;
             --accent: #f1c40f;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         body.dark-mode {
             --bg: #121212;
-            --text: #ffffff;
-            --muted: #b0b0b0;
+            --text: #e0e0e0;
+            --muted: #a0a0a0;
             --card: #1e1e1e;
             --input-bg: #2a2a2a;
-            --border: #444;
+            --border: #333;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
         }
 
         /* ================= BASE ================= */
         body {
             background-color: var(--bg);
             color: var(--text);
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* ================= TEXT ELEMENTS ================= */
@@ -148,8 +154,26 @@
             color: var(--text) !important;
         }
 
-        .logo{
-            color: rgb(66, 234, 20);
+        /* ================= LIST GROUPS ================= */
+        .list-group-item {
+            background-color: var(--card);
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        /* ================= UTILITIES ================= */
+        .text-accent {
+            color: #cc9900;
+            /* Darker yellow for better contrast on light */
+        }
+
+        body.dark-mode .text-accent {
+            color: #f1c40f;
+            /* Brighter yellow for dark mode */
+        }
+
+        .logo {
+            color: #42ea14;
         }
     </style>
 </head>
@@ -159,7 +183,7 @@
     <!-- ================= NAVBAR ================= -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand fw-bold" "><h5 class="logo">CHATIX</h5></a>
+            <a class="navbar-brand fw-bold" "><h5 class=" logo">CHATIX</h5></a>
 
             <div class="d-flex align-items-center gap-3">
                 {% if user.is_authenticated %}

@@ -5,105 +5,309 @@
 
 {% block content %}
 <style>
-    .chat-container {
-        max-width: 700px;
-        margin: auto;
-    }
-
-    .chat-box {
-        height: 320px;
-        overflow-y: auto;
-        padding: 15px;
+    /* CHAT CONTAINER */
+    .chat-layout {
+        height: 85vh;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        background: var(--card);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-top: 1rem;
+        position: relative;
     }
 
+    /* HEADER */
+    .chat-header {
+        padding: 15px 20px;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .chat-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        background: linear-gradient(135deg, #f1c40f, #e67e22);
+        font-size: 1.1rem;
+    }
+
+    /* MESSAGE AREA */
+    .chat-box {
+        flex: 1;
+        overflow-y: scroll;
+        padding: 20px;
+        background-color: var(--bg);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        scroll-behavior: smooth;
+        transition: background 0.3s;
+    }
+
+    /* BUBBLES */
     .chat-bubble {
-        max-width: 70%;
-        padding: 10px 14px;
-        border-radius: 14px;
-        font-size: 14px;
+        max-width: 75%;
+        padding: 12px 18px;
+        border-radius: 18px;
+        font-size: 0.95rem;
         position: relative;
         word-wrap: break-word;
+        line-height: 1.5;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
-    /* SENT */
+    /* ME (SENT) */
     .chat-bubble.me {
         align-self: flex-end;
-        background: linear-gradient(135deg, #00c853, #64dd17);
-        color: #000;
+        background: linear-gradient(135deg, #2ecc71, #27ae60);
+        color: white;
         border-bottom-right-radius: 4px;
+        margin-right: 35px;
+        /* Space for avatar */
     }
 
-    /* RECEIVED – LIGHT MODE */
+    /* OTHER (RECEIVED) */
     .chat-bubble.other {
         align-self: flex-start;
-        background: linear-gradient(135deg, #7b2cff, #9b5cff);
-        color: #ffffff;
+        background: var(--card);
+        color: var(--text);
+        border: 1px solid var(--border);
         border-bottom-left-radius: 4px;
+        margin-left: 35px;
+        /* Space for avatar */
     }
 
-    /* RECEIVED – DARK MODE */
-    body.dark-mode .chat-bubble.other {
-        background: linear-gradient(135deg, #5e35b1, #7e57c2);
-        color: #ffffff;
+    /* AVATAR IN MSG */
+    .msg-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        position: absolute;
+        bottom: -5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .msg-avatar.left {
+        left: -35px;
+    }
+
+    .msg-avatar.right {
+        right: -35px;
     }
 
     .chat-time {
-        font-size: 11px;
-        opacity: 0.7;
+        font-size: 0.7rem;
         margin-top: 4px;
         text-align: right;
+        opacity: 0.8;
     }
 
-    .chat-delete {
-        position: absolute;
-        top: 6px;
-        right: 6px;
-        background: none;
-        border: none;
+    /* INPUT AREA */
+    .chat-footer {
+        padding: 15px;
+        background: var(--card);
+        border-top: 1px solid var(--border);
+    }
+
+    .chat-input {
+        border-radius: 25px;
+        padding: 12px 20px;
+        border: 1px solid var(--border);
+        background: var(--input-bg);
+        color: var(--text);
+        transition: all 0.2s;
+    }
+
+    .chat-input:focus {
+        border-color: #f1c40f;
+        box-shadow: 0 0 0 4px rgba(241, 196, 15, 0.1);
+    }
+
+    /* UTILS */
+    .delete-btn {
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.2s;
         cursor: pointer;
+        padding: 4px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.1);
+        border: none;
+        color: white;
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+
+    .chat-bubble:hover .delete-btn {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .delete-btn:hover {
+        background: #e74c3c;
+    }
+
+    /* THEME MODAL */
+    .theme-option {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.2s;
+    }
+
+    .theme-option:hover {
+        transform: scale(1.1);
+        border-color: var(--text);
     }
 </style>
 
-<div class="chat-container mt-5">
+<div class="container" style="max-width: 900px;">
 
-    <h2 class="text-center mb-3" style="color:#f1c40f;">
-        Chat Room: {{ room.name }}
-    </h2>
+    <div class="chat-layout">
 
-    <p class="text-muted text-center mb-3">
-        Created on: {{ room.created_at|localtime|date:"M d, Y h:i A" }}<br>
-        Participants:
-        {% for p in room.participants.all %}
-        {{ p.username }}{% if not forloop.last %}, {% endif %}
-        {% endfor %}
-    </p>
+        <!-- HEADER -->
+        <div class="chat-header">
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'index' %}" class="btn btn-sm btn-icon btn-light rounded-circle shadow-sm"
+                    style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                    ←
+                </a>
 
-    <div id="messages" class="chat-box">
-        {% for message in messages %}
-        <div id="message-{{ message.id }}"
-            class="chat-bubble {% if message.sender == request.user %}me{% else %}other{% endif %}">
-            {{ message.content }}
-            <div class="chat-time">
-                {{ message.created_at|localtime|date:"h:i A" }}
+                {% for p in room.participants.all %}
+                {% if p != request.user %}
+                {% if p.userinfo.image %}
+                <img src="{{ p.userinfo.image.url }}" class="chat-avatar shadow-sm">
+                {% else %}
+                <div class="chat-avatar shadow-sm">
+                    {{ p.username|slice:":1"|upper }}
+                </div>
+                {% endif %}
+                <div>
+                    <h6 class="fw-bold mb-0 text-accent">{{ p.username }}</h6>
+                    <small class="text-muted" style="font-size: 0.8rem;">
+                        {% if p.last_login %}
+                        🕐 Last seen at {{ p.last_login|date:"h:i A" }}
+                        {% else %}
+                        <span class="text-success">● Online</span>
+                        {% endif %}
+                    </small>
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% if not room.participants.all %}
+                <div class="chat-avatar shadow-sm">
+                    {{ room.name|slice:":1"|upper }}
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0 text-accent">{{ room.name }}</h6>
+                </div>
+                {% endif %}
             </div>
 
-            {% if message.sender == request.user %}
-            <button class="chat-delete" onclick="deleteMessage({{ message.id }})">🗑</button>
-            {% endif %}
+            <!-- THEME BUTTON -->
+            <button class="btn btn-sm btn-light rounded-circle shadow-sm" style="width: 32px; height: 32px;"
+                title="Change Wallpaper" onclick="toggleThemeMenu()">
+                🎨
+            </button>
         </div>
-        {% endfor %}
+
+        <!-- THEME MENU (Hidden by default) -->
+        <div id="theme-menu" class="p-3 bg-white shadow rounded position-absolute"
+            style="display: none; top: 70px; right: 20px; z-index: 100; width: 220px;">
+            <h6 class="fw-bold mb-2 small text-dark">Choose Background</h6>
+            <div class="d-flex flex-wrap gap-2">
+                <div class="theme-option shadow-sm" style="background: var(--bg);" onclick="setTheme('')"
+                    title="Default"></div>
+                <!-- Solid / Gradient Colors -->
+                <div class="theme-option shadow-sm" style="background: #ece5dd;" onclick="setTheme('#ece5dd')"
+                    title="WhatsApp Default"></div>
+                <div class="theme-option shadow-sm" style="background: #202c33;" onclick="setTheme('#202c33')"
+                    title="Dark Gray"></div>
+                <div class="theme-option shadow-sm"
+                    style="background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);"
+                    onclick="setTheme('linear-gradient(135deg, #0f2027, #203a43, #2c5364)')" title="Deep Sea"></div>
+                <div class="theme-option shadow-sm" style="background: linear-gradient(135deg, #373B44, #4286f4);"
+                    onclick="setTheme('linear-gradient(135deg, #373B44, #4286f4)')" title="Blue Tech"></div>
+                <div class="theme-option shadow-sm" style="background: linear-gradient(135deg, #8E2DE2, #4A00E0);"
+                    onclick="setTheme('linear-gradient(135deg, #8E2DE2, #4A00E0)')" title="Royal Purple"></div>
+                <div class="theme-option shadow-sm"
+                    style="background: url('https://www.transparenttextures.com/patterns/cubes.png');"
+                    onclick="setTheme('url(https://www.transparenttextures.com/patterns/cubes.png)')" title="Pattern">
+                </div>
+            </div>
+        </div>
+
+        <!-- MESSAGES -->
+        <div id="messages" class="chat-box">
+            {% for message in messages %}
+            <div id="message-{{ message.id }}"
+                class="chat-bubble {% if message.sender == request.user %}me{% else %}other{% endif %}">
+
+                {% if message.sender.userinfo.image %}
+                <img src="{{ message.sender.userinfo.image.url }}"
+                    class="msg-avatar {% if message.sender == request.user %}right{% else %}left{% endif %}">
+                {% else %}
+                <div class="msg-avatar {% if message.sender == request.user %}right{% else %}left{% endif %} d-flex align-items-center justify-content-center fw-bold text-white small"
+                    style="background: #ccc; font-size: 10px;">
+                    {{ message.sender.username|slice:":1"|upper }}
+                </div>
+                {% endif %}
+
+                {% if message.sender != request.user %}
+                <div class="fw-bold mb-1" style="font-size: 0.75rem; color: var(--accent);">
+                    {{ message.sender.username }}
+                </div>
+                {% endif %}
+
+                {{ message.content }}
+
+                <div class="chat-time">
+                    {{ message.created_at|localtime|date:"h:i A" }}
+                </div>
+
+                {% if message.sender == request.user %}
+                <button class="delete-btn shadow-sm" onclick="deleteMessage({{ message.id }})">✕</button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- FOOTER -->
+        <form class="chat-footer d-flex gap-2 align-items-center" id="chat-form">
+            {% csrf_token %}
+            <input type="text" id="message_input" class="form-control chat-input" placeholder="Type a message..."
+                required autocomplete="off">
+            <button class="btn btn-warning rounded-circle shadow-sm d-flex align-items-center justify-content-center"
+                type="submit" style="width: 50px; height: 50px; flex-shrink: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </form>
+
     </div>
-
-    <form class="input-group mt-3" id="chat-form">
-        {% csrf_token %}
-        <input type="text" id="message_input" class="form-control" placeholder="Type a message..." required>
-        <button class="btn btn-warning fw-semibold" type="submit">Send</button>
-    </form>
-
-    <a href="{% url 'index' %}" class="btn btn-link mt-3">Back to Chat Rooms</a>
 </div>
 
 <script>
@@ -113,6 +317,35 @@
     const messageDiv = document.getElementById("messages");
     const input = document.getElementById("message_input");
     const form = document.getElementById("chat-form");
+
+    // Auto-scroll to bottom on load
+    messageDiv.scrollTop = messageDiv.scrollHeight;
+
+    // Apply saved theme
+    const savedTheme = localStorage.getItem(`chat_theme_${roomId}`);
+    if (savedTheme) {
+        messageDiv.style.background = savedTheme;
+    }
+
+    function toggleThemeMenu() {
+        const menu = document.getElementById("theme-menu");
+        menu.style.display = menu.style.display === "none" ? "block" : "none";
+    }
+
+    function setTheme(bg) {
+        messageDiv.style.background = bg;
+        localStorage.setItem(`chat_theme_${roomId}`, bg);
+        document.getElementById("theme-menu").style.display = "none";
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function (event) {
+        const menu = document.getElementById("theme-menu");
+        const button = document.querySelector('button[title="Change Wallpaper"]');
+        if (!menu.contains(event.target) && !button.contains(event.target)) {
+            menu.style.display = 'none';
+        }
+    });
 
     const socket = new WebSocket(
         "ws://" + window.location.host + "/ws/chat/" + roomId + "/"
@@ -131,11 +364,26 @@
         bubble.className = "chat-bubble " + (data.sender === username ? "me" : "other");
 
         let deleteBtn = "";
+        let senderName = "";
+
+        // Avatar Logic
+        const avatarClass = data.sender === username ? "right" : "left";
+        let avatarHtml = "";
+        if (data.avatar_url) {
+            avatarHtml = `<img src="${data.avatar_url}" class="msg-avatar ${avatarClass}">`;
+        } else {
+            avatarHtml = `<div class="msg-avatar ${avatarClass} d-flex align-items-center justify-content-center fw-bold text-white small" style="background: #ccc; font-size: 10px;">${data.sender.charAt(0).toUpperCase()}</div>`;
+        } // End Avatar Logic
+
         if (data.sender === username) {
-            deleteBtn = `<button class="chat-delete" onclick="deleteMessage(${data.message_id})">🗑</button>`;
+            deleteBtn = `<button class="delete-btn shadow-sm" onclick="deleteMessage(${data.message_id})">✕</button>`;
+        } else {
+            senderName = `<div class="fw-bold mb-1" style="font-size: 0.75rem; color: var(--accent);">${data.sender}</div>`;
         }
 
         bubble.innerHTML = `
+        ${avatarHtml}
+        ${senderName}
         ${data.message}
         <div class="chat-time">${data.time || "Just now"}</div>
         ${deleteBtn}
@@ -168,16 +416,18 @@
             confirmButtonText: "Yes, delete it!"
         }).then((result) => {
             if (result.isConfirmed) {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
                 fetch(`/delete-message/${msgId}/`, {
                     method: "POST",
                     headers: {
-                        "X-CSRFToken": "{{ csrf_token }}"
+                        "X-CSRFToken": csrfToken,
+                        "Content-Type": "application/json"
                     }
                 }).then(res => {
                     if (res.ok) {
-                        // Message will be removed via WebSocket
+                        console.log("Message deleted successfully");
                     } else {
-                        Swal.fire("Error", "Failed to delete message", "error");
+                        console.error("Failed to delete message");
                     }
                 });
             }

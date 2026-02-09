@@ -7,7 +7,8 @@ from .views import (
     Login, register, logout_view,
     index, search, chatroom,
     add_user_to_chatroom,
-    delete_chatroom, delete_message
+    delete_chatroom, delete_message,
+    favorites, toggle_favorite
 )
 
 urlpatterns = [
@@ -18,11 +19,13 @@ urlpatterns = [
 
     path("index/", index, name="index"),
     path("search/", search, name="search"),
+    path("favorites/", favorites, name="favorites"),
 
     path("chatroom/<int:id>/", chatroom, name="chatroom"),
     path("add-user/<int:user_id>/", add_user_to_chatroom, name="add_user_to_chatroom"),
 
     path("room/delete/<int:room_id>/", delete_chatroom, name="delete_chatroom"),
+    path("room/toggle-favorite/<int:room_id>/", toggle_favorite, name="toggle_favorite"),
     path("delete-message/<int:msg_id>/", delete_message, name="delete_message"),
 
 ]

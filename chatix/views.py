@@ -148,10 +148,25 @@ def chatroom(request, id):
         return redirect("index")
 
     messages_qs = room.messages.all().exclude(deleted_for=request.user)
+    
+    # Get the other user
+    other_user = None
+    is_active = False
+    for p in room.participants.all():
+        if p != request.user:
+            other_user = p
+            # Check if active (within 5 minutes)
+            if p.last_login:
+                from django.utils import timezone
+                from datetime import timedelta
+                is_active = (timezone.now() - p.last_login) < timedelta(minutes=5)
+            break
 
     return render(request, "chatix/chatroom.html", {
         "room": room,
-        "messages": messages_qs
+        "messages": messages_qs,
+        "other_user": other_user,
+        "is_active": is_active
     })
 
 
@@ -217,3 +232,36 @@ def delete_message(request, msg_id):
     )
 
     return JsonResponse({"status": "ok"})
+
+
+# ---------- FAVORITES ----------
+
+@login_required
+def favorites(request):
+    """View all favorite chats"""
+    favorite_rooms = ChatRoom.objects.filter(
+        favorited_by=request.user,
+        participants=request.user
+    ).exclude(hidden_for=request.user)
+    
+    return render(request, "chatix/favorites.html", {
+        "chatrooms": favorite_rooms
+    })
+
+
+@login_required
+def toggle_favorite(request, room_id):
+    """Toggle favorite status of a chat"""
+    room = get_object_or_404(ChatRoom, id=room_id)
+    
+    if request.user not in room.participants.all():
+        return JsonResponse({"status": "forbidden"}, status=403)
+    
+    if request.user in room.favorited_by.all():
+        room.favorited_by.remove(request.user)
+        is_favorite = False
+    else:
+        room.favorited_by.add(request.user)
+        is_favorite = True
+    
+    return JsonResponse({"status": "ok", "is_favorite": is_favorite})

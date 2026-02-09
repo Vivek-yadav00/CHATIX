@@ -1,0 +1,140 @@
+{% extends 'chatix/base.html' %}
+
+{% block title %}Favorites{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 950px;">
+
+    <!-- HEADER -->
+    <div class="row align-items-center mb-5">
+        <div class="col-md-8">
+            <h2 class="fw-bold mb-1">
+                <span class="text-warning">⭐</span> Favorite Chats
+            </h2>
+            <p class="text-muted">
+                Your starred conversations.
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{% url 'index' %}" class="btn btn-outline-warning fw-bold px-4 rounded-pill">
+                ← All Chats
+            </a>
+        </div>
+    </div>
+
+    <!-- FAVORITES LIST -->
+    {% if chatrooms %}
+    <div class="row g-3">
+        {% for room in chatrooms %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100 rounded-4 card-hover overflow-hidden transition-all">
+                <div class="card-body p-4 d-flex flex-column">
+
+                    <!-- ROOM HEADER -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex align-items-center gap-3">
+                            {% for p in room.participants.all %}
+                            {% if p != request.user %}
+                            {% if p.userinfo.image %}
+                            <img src="{{ p.userinfo.image.url }}" class="rounded-circle shadow-sm"
+                                style="width: 52px; height: 52px; object-fit: cover;">
+                            {% else %}
+                            <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm"
+                                style="width: 52px; height: 52px; background: linear-gradient(135deg, #667eea, #764ba2); font-size: 1.3rem;">
+                                {{ p.username|slice:":1"|upper }}
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h6 class="fw-bold mb-0 text-truncate" style="max-width: 150px;">{{ p.username }}</h6>
+                                <small class="text-muted" style="font-size: 0.75rem;">
+                                    {% if p.userinfo.name %}
+                                    {{ p.userinfo.name }}
+                                    {% else %}
+                                    <span class="text-success">● Online</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <!-- STAR (FILLED) -->
+                        <button class="btn btn-sm btn-icon text-warning toggle-fav" data-id="{{ room.id }}"
+                            title="Remove from favorites">
+                            ★
+                        </button>
+                    </div>
+
+                    <a href="{% url 'chatroom' room.id %}" class="stretched-link"></a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <!-- EMPTY STATE -->
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center"
+                style="width: 80px; height: 80px;">
+                <span style="font-size: 2rem;">⭐</span>
+            </div>
+        </div>
+        <h4 class="fw-bold mb-2">No favorites yet</h4>
+        <p class="text-muted mb-4">Star a chat to see it here.</p>
+        <a href="{% url 'index' %}" class="btn btn-warning px-4 py-2 fw-bold rounded-pill shadow-sm">
+            Go to Chats
+        </a>
+    </div>
+    {% endif %}
+
+    <style>
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow) !important;
+        }
+
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none !important;
+            font-size: 1.2rem;
+        }
+
+        .toggle-fav {
+            position: relative;
+            z-index: 2;
+        }
+    </style>
+
+    <script>
+        document.querySelectorAll(".toggle-fav").forEach(btn => {
+            btn.onclick = function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const roomId = this.dataset.id;
+                const card = this.closest(".col-md-6");
+
+                fetch(`/room/toggle-favorite/${roomId}/`, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    }
+                }).then(res => res.json()).then(data => {
+                    if (!data.is_favorite) {
+                        card.remove();
+                    }
+                });
+            };
+        });
+    </script>
+</div>
+{% endblock %}

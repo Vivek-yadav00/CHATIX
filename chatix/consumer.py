@@ -45,6 +45,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         user = await self.get_user(sender)
+        await self.update_last_seen(user)  # Update last seen on message send
         await self.save_message(room, user, message)
 
         # 🔥 UNHIDE ROOM & NOTIFY PARTICIPANTS
@@ -67,12 +68,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Ensure visible for sender too (if they deleted it previously)
         await self.unhide_room_for_user(room, user)
 
+        # Get Avatar URL
+        avatar_url = None
+        try:
+            user_info = await database_sync_to_async(lambda: user.userinfo)()
+            if user_info.image:
+                avatar_url = user_info.image.url
+        except:
+            pass
+
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 "type": "chat_message",
                 "message": message,
                 "sender": sender,
+                "avatar_url": avatar_url
             }
         )
 
@@ -80,7 +91,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(json.dumps({
             "type": "chat",
             "message": event["message"],
-            "sender": event["sender"]
+            "sender": event["sender"],
+            "avatar_url": event.get("avatar_url")
         }))
 
     async def room_deleted(self, event):
@@ -134,6 +146,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def unhide_room_for_user(self, room, user):
         room.hidden_for.remove(user)
+
+    @database_sync_to_async
+    def update_last_seen(self, user):
+        from django.utils import timezone
+        user.last_login = timezone.now()
+        user.save(update_fields=['last_login'])
 
 
 class DashboardConsumer(AsyncWebsocketConsumer):

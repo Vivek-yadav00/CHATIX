@@ -6,137 +6,227 @@
 <div class="container py-4" style="max-width: 950px;">
 
     <!-- HEADER -->
-    <div class="text-center mb-4">
-        <h2 class="fw-bold" style="color:#cc9900;">
-            Welcome, {{ request.user.username }}
-        </h2>
-        <p class="text-muted">
-            Your conversations
-        </p>
-    </div>
-
-    <!-- SEARCH -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-            <form action="{% url 'search' %}" method="get" class="input-group">
-                <input type="text" name="q" class="form-control" placeholder="Search users by username, name, or email"
-                    autocomplete="off">
-                <button class="btn btn-yellow px-4 fw-semibold">
-                    🔍 Search
-                </button>
-            </form>
+    <div class="row align-items-center mb-5">
+        <div class="col-md-8">
+            <h2 class="fw-bold mb-1">
+                Hello, <span class="text-accent">{{ request.user.username }}</span>
+            </h2>
+            <p class="text-muted">
+                Welcome back to your messages.
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end d-flex gap-2 justify-content-md-end">
+            <a href="{% url 'favorites' %}" class="btn btn-outline-warning fw-bold px-3 rounded-pill">
+                ⭐ Favorites
+            </a>
+            <a href="{% url 'search' %}" class="btn btn-warning fw-bold px-4 rounded-pill shadow-sm">
+                + New Chat
+            </a>
         </div>
     </div>
 
     <!-- CHAT LIST -->
-    <h5 class="fw-semibold mb-3" style="color:#cc9900;">
-        Your Chats
-    </h5>
-
     {% if chatrooms %}
-    <div class="row g-4">
+    <div class="row g-3">
         {% for room in chatrooms %}
-        <div class="col-md-6">
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100 rounded-4 card-hover overflow-hidden transition-all">
+                <div class="card-body p-4 d-flex flex-column">
 
-            <div class="card border-0 shadow-sm h-100 rounded-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-
-                    <!-- INFO -->
-                    <div>
-                        <h6 class="fw-bold mb-1">
-                            {{ room.name }}
-                        </h6>
-                        <small class="text-muted">
-                            {% for u in room.participants.all %}
-                            {{ u.username }}{% if not forloop.last %}, {% endif %}
+                    <!-- ROOM HEADER -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex align-items-center gap-3">
+                            {% with other_user=room.participants.all|first %}
+                            {% for p in room.participants.all %}
+                            {% if p != request.user %}
+                            {% if p.userinfo.image %}
+                            <img src="{{ p.userinfo.image.url }}" class="rounded-circle shadow-sm"
+                                style="width: 52px; height: 52px; object-fit: cover;">
+                            {% else %}
+                            <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm"
+                                style="width: 52px; height: 52px; background: linear-gradient(135deg, #667eea, #764ba2); font-size: 1.3rem;">
+                                {{ p.username|slice:":1"|upper }}
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h6 class="fw-bold mb-0 text-truncate" style="max-width: 150px;">{{ p.username }}</h6>
+                                <small class="text-muted" style="font-size: 0.75rem;">
+                                    {% if p.userinfo.name %}
+                                    {{ p.userinfo.name }}
+                                    {% else %}
+                                    <span class="text-success">● Online</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            {% endif %}
                             {% endfor %}
-                        </small>
+                            {% endwith %}
+                            {% if not room.participants.all %}
+                            <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm"
+                                style="width: 52px; height: 52px; background: linear-gradient(135deg, #f1c40f, #e67e22); font-size: 1.3rem;">
+                                {{ room.name|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0">{{ room.name }}</h6>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- ACTIONS -->
+                        <div class="d-flex gap-1">
+                            <button
+                                class="btn btn-sm btn-icon toggle-fav {% if request.user in room.favorited_by.all %}text-warning{% else %}text-muted{% endif %}"
+                                data-id="{{ room.id }}" title="Toggle Favorite">
+                                {% if request.user in room.favorited_by.all %}★{% else %}☆{% endif %}
+                            </button>
+                            <button class="btn btn-sm btn-icon text-muted delete-room delete-hover"
+                                data-id="{{ room.id }}" title="Remove chat">
+                                ✕
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- ACTIONS -->
-                    <div class="d-flex gap-2">
-                        <a href="{% url 'chatroom' room.id %}" class="btn btn-sm btn-outline-warning fw-semibold">
-                            Open
-                        </a>
-
-                        <button class="btn btn-sm btn-outline-danger delete-room" data-id="{{ room.id }}"
-                            title="Delete chat for me">
-                            🗑
-                        </button>
-                    </div>
-
+                    <a href="{% url 'chatroom' room.id %}" class="stretched-link"></a>
                 </div>
             </div>
-
         </div>
         {% endfor %}
     </div>
 
     {% else %}
     <!-- EMPTY STATE -->
-    <div class="card border-0 shadow-sm text-center mt-4">
-        <div class="card-body py-5">
-            <h5>No chats yet</h5>
-            <p class="text-muted mb-3">
-                Search for users and start chatting
-            </p>
-            <a href="{% url 'search' %}" class="btn btn-yellow">
-                Start New Chat
-            </a>
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center"
+                style="width: 80px; height: 80px;">
+                <span style="font-size: 2rem;">💬</span>
+            </div>
         </div>
+        <h4 class="fw-bold mb-2">No messages yet</h4>
+        <p class="text-muted mb-4">Start a conversation to connect with others.</p>
+        <a href="{% url 'search' %}" class="btn btn-warning px-4 py-2 fw-bold rounded-pill shadow-sm">
+            Start a Chat
+        </a>
     </div>
     {% endif %}
-</div>
 
-<!-- ================= DELETE CHAT (FOR ME ONLY) ================= -->
-<script>
-    document.querySelectorAll(".delete-room").forEach(btn => {
-        btn.onclick = function () {
-            const roomId = this.dataset.id;
+    <style>
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow) !important;
+        }
 
-            Swal.fire({
-                title: "Delete chat?",
-                text: "This chat will be removed only for you.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#d33",
-                cancelButtonColor: "#6c757d",
-                confirmButtonText: "Delete",
-                cancelButtonText: "Cancel"
-            }).then(result => {
-                if (result.isConfirmed) {
-                    fetch(`/room/delete/${roomId}/`, {
-                        method: "POST",
-                        headers: {
-                            "X-CSRFToken": "{{ csrf_token }}"
-                        }
-                    }).then(() => {
-                        // 🔥 Remove card instantly
-                        btn.closest(".col-md-6").remove();
-                    });
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+
+        .delete-hover:hover {
+            color: #dc3545 !important;
+            background: rgba(220, 53, 69, 0.1);
+            border-radius: 50%;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none !important;
+        }
+
+        /* Make sure delete button is above the stretched link */
+        .delete-room,
+        .toggle-fav {
+            position: relative;
+            z-index: 2;
+        }
+
+        .toggle-fav:hover {
+            color: #f1c40f !important;
+        }
+
+        .toggle-fav {
+            font-size: 1.2rem;
+        }
+    </style>
+
+    <!-- ================= DELETE CHAT (FOR ME ONLY) ================= -->
+    <script>
+        document.querySelectorAll(".delete-room").forEach(btn => {
+            btn.onclick = function () {
+                const roomId = this.dataset.id;
+
+                Swal.fire({
+                    title: "Delete chat?",
+                    text: "This chat will be removed only for you.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#d33",
+                    cancelButtonColor: "#6c757d",
+                    confirmButtonText: "Delete",
+                    cancelButtonText: "Cancel"
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        fetch(`/room/delete/${roomId}/`, {
+                            method: "POST",
+                            headers: {
+                                "X-CSRFToken": "{{ csrf_token }}"
+                            }
+                        }).then(() => {
+                            // 🔥 Remove card instantly
+                            btn.closest(".col-md-6").remove();
+                        });
+                    }
+                });
+            };
+        });
+
+        // ⭐ Toggle Favorite
+        document.querySelectorAll(".toggle-fav").forEach(btn => {
+            btn.onclick = function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const roomId = this.dataset.id;
+                const starBtn = this;
+
+                fetch(`/room/toggle-favorite/${roomId}/`, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    }
+                }).then(res => res.json()).then(data => {
+                    if (data.is_favorite) {
+                        starBtn.classList.remove("text-muted");
+                        starBtn.classList.add("text-warning");
+                        starBtn.innerHTML = "★";
+                    } else {
+                        starBtn.classList.remove("text-warning");
+                        starBtn.classList.add("text-muted");
+                        starBtn.innerHTML = "☆";
+                    }
+                });
+            };
+        });
+
+        // 🔥 Real-time Dashboard Updates
+        const notifySocket = new WebSocket(
+            "ws://" + window.location.host + "/ws/notify/"
+        );
+
+        notifySocket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+            if (data.type === "notification") {
+                // Check if card exists
+                const existingCard = document.querySelector(`.delete-room[data-id="${data.room_id}"]`);
+
+                if (existingCard) {
+                    // Optional: Move to top or highlight (for now just ignore as it's already there)
+                    return;
                 }
-            });
-        };
-    });
 
-    // 🔥 Real-time Dashboard Updates
-    const notifySocket = new WebSocket(
-        "ws://" + window.location.host + "/ws/notify/"
-    );
-
-    notifySocket.onmessage = function (e) {
-        const data = JSON.parse(e.data);
-        if (data.type === "notification") {
-            // Check if card exists
-            const existingCard = document.querySelector(`.delete-room[data-id="${data.room_id}"]`);
-
-            if (existingCard) {
-                // Optional: Move to top or highlight (for now just ignore as it's already there)
-                return;
-            }
-
-            // Create new card HTML
-            const newCardHtml = `
+                // Create new card HTML
+                const newCardHtml = `
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100 rounded-3">
                     <div class="card-body d-flex justify-content-between align-items-center">
@@ -155,15 +245,15 @@
             </div>
         `;
 
-            // Prepend to list (or remove "No chats" and add row)
-            const chatList = document.querySelector(".row.g-4");
-            if (chatList) {
-                chatList.insertAdjacentHTML("afterbegin", newCardHtml);
-            } else {
-                // If list empty (showing "No chats"), reload to keep it simple or replace content
-                location.reload();
+                // Prepend to list (or remove "No chats" and add row)
+                const chatList = document.querySelector(".row.g-4");
+                if (chatList) {
+                    chatList.insertAdjacentHTML("afterbegin", newCardHtml);
+                } else {
+                    // If list empty (showing "No chats"), reload to keep it simple or replace content
+                    location.reload();
+                }
             }
-        }
-    };
-</script>
-{% endblock %}
+        };
+    </script>
+    {% endblock %}
