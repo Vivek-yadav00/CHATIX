@@ -41,11 +41,19 @@
 
         /* ================= BASE ================= */
         body {
-            background-color: var(--bg);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            /* Soft Gradient */
             color: var(--text);
             font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
         }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            /* Deep Sea */
+        }
+
 
         /* ================= TEXT ELEMENTS ================= */
         h1,
@@ -70,37 +78,15 @@
 
         /* ================= NAVBAR ================= */
         nav {
-            background-color: #FFD700;
+            transition: background-color 5000s ease-in-out 0s;
         }
 
-        body.dark-mode nav {
-            background-color: #1a1a1a;
+        /* Explicitly for dark mode if needed override */
+        body.dark-mode input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 30px #2a2a2a inset !important;
+            -webkit-text-fill-color: #e0e0e0 !important;
         }
 
-        /* ================= CARDS ================= */
-        .card,
-        .container {
-            background-color: var(--card);
-        }
-
-        /* ================= FORMS ================= */
-        input,
-        textarea,
-        select {
-            background-color: var(--input-bg) !important;
-            color: var(--text) !important;
-            border: 1px solid var(--border) !important;
-        }
-
-        ::placeholder {
-            color: var(--muted) !important;
-        }
-
-        /* Autofill fix */
-        input:-webkit-autofill {
-            -webkit-text-fill-color: var(--text) !important;
-            box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
-        }
 
         /* File input */
         input[type="file"] {
@@ -144,14 +130,48 @@
             color: #ffffff;
         }
 
+        /* ================= CARDS ================= */
         .card {
-            background-color: var(--card) !important;
-            color: var(--text) !important;
-            border-color: var(--border) !important;
+            background-color: var(--card);
+            /* Removed !important to allow glass effects */
+            color: var(--text);
+            border-color: var(--border);
         }
 
-        .card * {
+        /* ================= FORMS ================= */
+        /* Explicitly target Bootstrap classes to override them */
+        .form-control,
+        .form-select,
+        input,
+        textarea,
+        select {
+            background-color: var(--input-bg) !important;
             color: var(--text) !important;
+            border: 1px solid var(--border) !important;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: var(--input-bg) !important;
+            color: var(--text) !important;
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 0.25rem rgba(241, 196, 15, 0.25);
+        }
+
+        ::placeholder {
+            color: var(--muted) !important;
+            opacity: 0.7;
+        }
+
+        /* Autofill fix - Ensures contrasting text/bg */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px var(--input-bg) inset !important;
+            -webkit-text-fill-color: var(--text) !important;
+            caret-color: var(--text) !important;
+            transition: background-color 5000s ease-in-out 0s;
         }
 
         /* ================= LIST GROUPS ================= */
@@ -181,30 +201,110 @@
 <body>
 
     <!-- ================= NAVBAR ================= -->
-    <nav class="navbar navbar-expand-lg">
+    <nav class="navbar navbar-expand-lg border-bottom border-dark">
         <div class="container">
-            <a class="navbar-brand fw-bold" "><h5 class=" logo">CHATIX</h5></a>
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'index' %}"
+                style="text-decoration: none;">
+                <!-- Logo Icon -->
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                    style="filter: drop-shadow(0 0 5px rgba(118, 75, 162, 0.5));">
+                    <path
+                        d="M21 11.5C21 16.19 16.97 20 12 20C9.61 20 7.43 19.26 5.79 18.04L2 19L3.58 15.66C2.58 14.44 2 13.01 2 11.5C2 6.81 6.48 3 12 3C16.97 3 21 6.81 21 11.5Z"
+                        fill="url(#logo_gradient)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                    <defs>
+                        <linearGradient id="logo_gradient" x1="2" y1="3" x2="21" y2="20" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#667eea" />
+                            <stop offset="1" stop-color="#764ba2" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="8" cy="11.5" r="1.5" fill="white" />
+                    <circle cx="12" cy="11.5" r="1.5" fill="white" />
+                    <circle cx="16" cy="11.5" r="1.5" fill="white" />
+                </svg>
+
+                <!-- Gradient Text -->
+                <h4 class="mb-0 fw-bold"
+                    style="background: linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
+                    Chatix
+                </h4>
+            </a>
 
             <div class="d-flex align-items-center gap-3">
                 {% if user.is_authenticated %}
-                {% if user.userinfo.image %}
-                <img src="{{ user.userinfo.image.url }}"
-                    style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
-                {% else %}
-                <div style="width:32px;height:32px;border-radius:50%;background:#ccc;"></div>
-                {% endif %}
 
-                <span class="fw-semibold">Welcome {{ user.username }}</span>
-                <a href="{% url 'logout' %}" class="btn btn-outline-dark btn-sm">Logout</a>
+                <!-- Theme Toggle -->
+                <button id="themeToggle" class="btn btn-sm btn-outline-secondary border-0 text-white">🌙</button>
+
+                <!-- Profile Dropdown -->
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle"
+                        id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.userinfo.image %}
+                        <img src="{{ user.userinfo.image.url }}" class="rounded-circle border border-2 border-primary"
+                            style="width: 38px; height: 38px; object-fit: cover;">
+                        {% else %}
+                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold"
+                            style="width: 38px; height: 38px;">
+                            {{ user.username|make_list|first|upper }}
+                        </div>
+                        {% endif %}
+                        <span class="ms-2 fw-semibold d-none d-md-block">{{ user.username }}</span>
+                    </a>
+
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg" aria-labelledby="profileDropdown"
+                        style="background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);">
+                        <li>
+                            <h6 class="dropdown-header text-muted">Signed in as <br>
+                                <strong class="text-white">
+                                    {{ user.email|default:user.username }}
+                                </strong>
+                            </h6>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider bg-secondary">
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-white-50 hover-white" href="{% url 'settings' %}">
+                                ⚙️ Settings
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-white-50 hover-white" href="{% url 'password_change' %}">
+                                🔒 Change Password
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider bg-secondary">
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-danger fw-semibold" href="{% url 'logout' %}">
+                                🚪 Logout
+                            </a>
+                        </li>
+                    </ul>
+                    <style>
+                        .dropdown-item:hover {
+                            background: rgba(255, 255, 255, 0.1);
+                            color: white !important;
+                        }
+
+                        .dropdown-menu {
+                            min-width: 200px;
+                            padding: 0.5rem;
+                            border-radius: 12px;
+                        }
+                    </style>
+                </div>
+
                 {% else %}
+                <!-- Guest View -->
+                <button id="themeToggle" class="btn btn-sm btn-outline-secondary me-2">🌙</button>
                 {% if request.resolver_match.url_name == 'login' %}
-                <a href="{% url 'register' %}" class="btn btn-outline-dark btn-sm">Create Account</a>
+                <a href="{% url 'register' %}" class="btn btn-outline-light btn-sm px-3 rounded-pill">Create Account</a>
                 {% elif request.resolver_match.url_name == 'register' %}
-                <a href="{% url 'login' %}" class="btn btn-outline-dark btn-sm">Login</a>
+                <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm px-3 rounded-pill">Login</a>
                 {% endif %}
                 {% endif %}
-
-                <button id="themeToggle" class="btn btn-outline-dark btn-sm">🌙</button>
             </div>
         </div>
     </nav>

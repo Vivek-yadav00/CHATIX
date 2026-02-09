@@ -1,10 +1,10 @@
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.auth import views as auth_views
 
-from django.urls import path
 from .views import (
-    Login, register, logout_view,
+    Login, register, logout_view, settings_view,
     index, search, chatroom,
     add_user_to_chatroom,
     delete_chatroom, delete_message,
@@ -15,7 +15,12 @@ urlpatterns = [
     path("", Login, name="login"),
     path("login/", Login, name="login"),
     path("register/", register, name="register"),
+    path("settings/", settings_view, name="settings"),
     path("logout/", logout_view, name="logout"),
+
+    # Password Change
+    path("password-change/", auth_views.PasswordChangeView.as_view(template_name='chatix/change_password.html', success_url='/password-change/done/'), name='password_change'),
+    path("password-change/done/", auth_views.PasswordChangeDoneView.as_view(template_name='chatix/password_change_done.html'), name='password_change_done'),
 
     path("index/", index, name="index"),
     path("search/", search, name="search"),

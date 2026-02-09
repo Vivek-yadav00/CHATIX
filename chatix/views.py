@@ -98,6 +98,46 @@ def register(request):
     return render(request, "chatix/register.html")
 
 
+@login_required
+def settings_view(request):
+    if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        name = request.POST.get("name", "").strip()
+        email = request.POST.get("email", "").strip()
+        phone = request.POST.get("phone", "").strip()
+        image = request.FILES.get("image")
+
+        # Basic Validation
+        if not all([username, name, email, phone]):
+             messages.error(request, "All fields are required")
+             return redirect("settings")
+
+        # Username clash check
+        if User.objects.filter(username=username).exclude(id=request.user.id).exists():
+            messages.error(request, "Username already taken")
+            return redirect("settings")
+
+        # Update User
+        user = request.user
+        user.username = username
+        user.email = email
+        user.save()
+
+        # Update UserInfo
+        user_info, created = UserInfo.objects.get_or_create(user=user)
+        user_info.name = name
+        user_info.phone = phone
+        user_info.email = email # Keep sync
+        if image:
+            user_info.image = image
+        user_info.save()
+
+        messages.success(request, "Profile updated successfully")
+        return redirect("settings")
+
+    return render(request, "chatix/settings.html")
+
+
 def logout_view(request):
     logout(request)
     return redirect("login")

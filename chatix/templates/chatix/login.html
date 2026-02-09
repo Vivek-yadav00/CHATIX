@@ -3,36 +3,60 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-center align-items-center" style="min-height: 85vh;">
-    <div class="card shadow-lg p-4" style="width: 100%; max-width: 420px; border-radius: 16px;">
-        <h3 class="text-center mb-4 fw-bold">Login</h3>
+<div class="d-flex justify-content-center align-items-center"
+    style="min-height: 85vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
 
-        <form method="post">
+    <!-- Theme-aware Glass Card -->
+    <div class="card shadow-lg p-5" style="width: 100%; max-width: 450px; border-radius: 20px; 
+               background: rgba(255, 255, 255, 0.9); 
+               border: 1px solid rgba(255, 255, 255, 0.3); 
+               backdrop-filter: blur(15px);">
+
+        <!-- Dark Mode Override Script (Inline for immediate effect) -->
+        <script>
+            if (document.body.classList.contains('dark-mode') || localStorage.getItem('theme') === 'dark') {
+                document.currentScript.parentElement.style.background = 'rgba(30, 30, 30, 0.9)';
+                document.currentScript.parentElement.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+            }
+        </script>
+
+        <div class="text-center mb-4">
+            <h2 class="fw-bold mb-1">Welcome Back</h2>
+            <p class="text-muted small">Enter your credentials to access your account.</p>
+        </div>
+
+        <form method="post" class="needs-validation" novalidate>
             {% csrf_token %}
 
-            <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" name="username" class="form-control" required>
+            <div class="form-floating mb-3">
+                <input type="text" name="username" class="form-control rounded-3" id="floatingInput"
+                    placeholder="Username" required style="border-radius: 12px; border: 1px solid #e0e0e0;">
+                <label for="floatingInput" class="text-muted">Username</label>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-control" required>
+            <div class="form-floating mb-4">
+                <input type="password" name="password" class="form-control rounded-3" id="floatingPassword"
+                    placeholder="Password" required style="border-radius: 12px; border: 1px solid #e0e0e0;">
+                <label for="floatingPassword" class="text-muted">Password</label>
             </div>
 
-            <button type="submit" class="btn w-100 py-2 fw-semibold text-white"
-        style="background: linear-gradient(135deg, #FFD700, #e6c200); border-radius: 8px;">
-    Login →
-</button>
+            <button type="submit" class="btn w-100 py-3 fw-bold text-white shadow"
+                style="background: linear-gradient(45deg, #667eea, #764ba2); border-radius: 12px; border: none; letter-spacing: 0.5px; transition: all 0.3s ease;">
+                Sign In
+            </button>
+            <style>
+                button:hover {
+                    box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4);
+                    transform: translateY(-2px);
+                }
+            </style>
 
         </form>
 
-        <!-- 🔥 SWITCH SECTION -->
         <div class="text-center mt-4">
-            <span class="text-muted">Don't have an account?</span>
-            <a href="{% url 'register' %}" class="btn btn-outline-warning btn-sm ms-2">
-                Create Account
-            </a>
+            <span class="text-muted small">New here?</span>
+            <a href="{% url 'register' %}" class="fw-bold ms-1" style="color: #667eea; text-decoration: none;">Create an
+                account</a>
         </div>
     </div>
 </div>
