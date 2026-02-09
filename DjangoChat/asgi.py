@@ -7,20 +7,23 @@ This file supports both HTTP and WebSocket connections using Django Channels.
 """
 
 import os
-
 from django.core.asgi import get_asgi_application
+
+# Set default Django settings module BEFORE any imports
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DjangoChat.settings')
+
+# Initialize Django ASGI application early to ensure apps are loaded
+django_asgi_app = get_asgi_application()
+
+# NOW import Channels components (after Django is initialized)
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
-
 import chatix.routing
-
-# Set default Django settings module
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DjangoChat.settings')
 
 # Create ASGI application
 application = ProtocolTypeRouter(
     {
-        "http": get_asgi_application(),
+        "http": django_asgi_app,
         "websocket": AuthMiddlewareStack(
             URLRouter(
                 chatix.routing.websocket_urlpatterns
