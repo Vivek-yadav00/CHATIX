@@ -209,9 +209,10 @@
             };
         });
 
-        // 🔥 Real-time Dashboard Updates
+        // 🔥 Real-time Dashboard Updates - Use wss:// for HTTPS
+        const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
         const notifySocket = new WebSocket(
-            "ws://" + window.location.host + "/ws/notify/"
+            wsProtocol + window.location.host + "/ws/notify/"
         );
 
         notifySocket.onmessage = function (e) {

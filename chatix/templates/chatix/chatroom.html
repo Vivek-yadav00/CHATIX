@@ -457,8 +457,10 @@
         }
     });
 
+    // Use wss:// for HTTPS, ws:// for HTTP
+    const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
     const socket = new WebSocket(
-        "ws://" + window.location.host + "/ws/chat/" + roomId + "/"
+        wsProtocol + window.location.host + "/ws/chat/" + roomId + "/"
     );
 
     socket.onmessage = e => {
