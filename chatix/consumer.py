@@ -7,6 +7,12 @@ import json
 class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
+        self.user = self.scope["user"]
+        
+        if not self.user.is_authenticated:
+            await self.close()
+            return
+
         self.room_id = self.scope['url_route']['kwargs']['room_id']
         self.room_group_name = f'chat_{self.room_id}'
 
@@ -30,9 +36,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-
         message = data.get("message")
-        sender = data.get("sender")
+        
+        # Use authenticated user from scope, ignore "sender" in payload for security
+        sender_user = self.user
+        sender_username = sender_user.username
 
         room = await self.get_room_safe(self.room_id)
 
@@ -44,14 +52,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
-        user = await self.get_user(sender)
-        await self.update_last_seen(user)  # Update last seen on message send
-        await self.save_message(room, user, message)
+        await self.update_last_seen(sender_user)  # Update last seen on message send
+        await self.save_message(room, sender_user, message)
 
         # 🔥 UNHIDE ROOM & NOTIFY PARTICIPANTS
         participants = await self.get_participants(room)
         for p in participants:
-            if p != user:  # Don't notify sender, but ensure room is visible
+            if p != sender_user:  # Don't notify sender, but ensure room is visible
                 await self.unhide_room_for_user(room, p)
                 
                 await self.channel_layer.group_send(
@@ -60,18 +67,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         "type": "chat_notification",
                         "room_id": self.room_id,
                         "room_name": room.name,
-                        "sender": sender,
+                        "sender": sender_username,
                         "message": message,
                     }
                 )
         
         # Ensure visible for sender too (if they deleted it previously)
-        await self.unhide_room_for_user(room, user)
+        await self.unhide_room_for_user(room, sender_user)
 
         # Get Avatar URL
         avatar_url = None
         try:
-            user_info = await database_sync_to_async(lambda: user.userinfo)()
+            user_info = await database_sync_to_async(lambda: sender_user.userinfo)()
             if user_info.image:
                 avatar_url = user_info.image.url
         except:
@@ -82,7 +89,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             {
                 "type": "chat_message",
                 "message": message,
-                "sender": sender,
+                "sender": sender_username,
                 "avatar_url": avatar_url
             }
         )

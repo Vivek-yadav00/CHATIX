@@ -16,17 +16,17 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DjangoChat.settings')
 django_asgi_app = get_asgi_application()
 
 # NOW import Channels components (after Django is initialized)
-from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.auth import AuthMiddlewareStack
-import chatix.routing
+from channels.security.websocket import AllowedHostsOriginValidator
 
 # Create ASGI application
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": AuthMiddlewareStack(
-            URLRouter(
-                chatix.routing.websocket_urlpatterns
+        "websocket": AllowedHostsOriginValidator(
+            AuthMiddlewareStack(
+                URLRouter(
+                    chatix.routing.websocket_urlpatterns
+                )
             )
         ),
     }

@@ -22,6 +22,10 @@ if DEBUG:
 if '.onrender.com' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('.onrender.com')
 
+# Trust Render origins for CSRF (important for Django 4.0+)
+CSRF_TRUSTED_ORIGINS = ['https://' + host for host in ALLOWED_HOSTS if host]
+CSRF_TRUSTED_ORIGINS.append('https://*.onrender.com')
+
 # ===============================
 # APPLICATIONS
 # ===============================
