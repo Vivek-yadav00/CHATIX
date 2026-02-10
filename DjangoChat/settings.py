@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'chatix',
     'channels',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 # ===============================
@@ -82,40 +84,12 @@ TEMPLATES = [
 ASGI_APPLICATION = 'DjangoChat.asgi.application'
 
 # Channel Layer Configuration
-# Uses Redis if REDIS_URL is set, otherwise falls back to InMemoryChannelLayer for local dev
-REDIS_URL = os.environ.get('REDIS_URL')
-
-if REDIS_URL:
-    # Render Redis uses rediss:// (SSL) - needs special config
-    if REDIS_URL.startswith('rediss://'):
-        import ssl
-        CHANNEL_LAYERS = {
-            'default': {
-                'BACKEND': 'channels_redis.core.RedisChannelLayer',
-                'CONFIG': {
-                    'hosts': [{
-                        'address': REDIS_URL,
-                        'ssl_cert_reqs': ssl.CERT_NONE,  # Required for Render Redis
-                    }],
-                },
-            }
-        }
-    else:
-        CHANNEL_LAYERS = {
-            'default': {
-                'BACKEND': 'channels_redis.core.RedisChannelLayer',
-                'CONFIG': {
-                    'hosts': [REDIS_URL],
-                },
-            }
-        }
-else:
-    # Fallback for local development (not suitable for production with multiple workers)
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels.layers.InMemoryChannelLayer',
-        }
+# Using InMemoryChannelLayer as requested (Note: Not suitable for multi-instance production)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
+}
 
 # ===============================
 # DATABASE
@@ -174,8 +148,19 @@ else:
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# MEDIA (Cloudinary for Production)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+# Use Cloudinary for media files if credentials are set
+if os.environ.get('CLOUDINARY_CLOUD_NAME'):
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # ===============================
 # DEFAULT PK
