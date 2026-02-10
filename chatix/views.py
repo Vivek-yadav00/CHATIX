@@ -147,11 +147,14 @@ def logout_view(request):
 
 @login_required
 def index(request):
+    from django.db.models import Max
     chatrooms = ChatRoom.objects.filter(
         participants=request.user
     ).exclude(
         hidden_for=request.user
-    )
+    ).annotate(
+        last_msg_time=Max('messages__created_at')
+    ).order_by('-last_msg_time')
 
     return render(request, "chatix/index.html", {
         "chatrooms": chatrooms
