@@ -53,7 +53,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         await self.update_last_seen(sender_user)  # Update last seen on message send
-        await self.save_message(room, sender_user, message)
+        msg_instance = await self.save_message(room, sender_user, message)
 
         # 🔥 UNHIDE ROOM & NOTIFY PARTICIPANTS
         participants = await self.get_participants(room)
@@ -90,7 +90,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "type": "chat_message",
                 "message": message,
                 "sender": sender_username,
-                "avatar_url": avatar_url
+                "avatar_url": avatar_url,
+                "message_id": msg_instance.id 
             }
         )
 
@@ -99,7 +100,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "type": "chat",
             "message": event["message"],
             "sender": event["sender"],
-            "avatar_url": event.get("avatar_url")
+            "avatar_url": event.get("avatar_url"),
+            "message_id": event.get("message_id")
         }))
 
     async def room_deleted(self, event):
@@ -122,7 +124,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def save_message(self, room, user, message):
         from .models import Message
-        Message.objects.create(
+        return Message.objects.create(
             chatroom=room,
             sender=user,
             content=message
