@@ -305,13 +305,21 @@
 
                 {% for p in room.participants.all %}
                 {% if p != request.user %}
-                {% if p.userinfo.image %}
-                <img src="{{ p.userinfo.image.url }}" class="chat-avatar shadow-sm">
-                {% else %}
-                <div class="chat-avatar shadow-sm">
-                    {{ p.username|slice:":1"|upper }}
+                <div class="position-relative chat-avatar shadow-sm"
+                    style="overflow: hidden; background: linear-gradient(135deg, #f1c40f, #e67e22);">
+                    <!-- 1. Initials (Always rendered as background) -->
+                    <div class="d-flex align-items-center justify-content-center w-100 h-100 text-white fw-bold"
+                        style="font-size: 1.2rem;">
+                        {{ p.username|slice:":1"|upper }}
+                    </div>
+
+                    <!-- 2. Image (Overlay, hides on error) -->
+                    {% if p.userinfo.image %}
+                    <img src="{{ p.userinfo.image.url }}" class="position-absolute top-0 start-0 w-100 h-100"
+                        style="object-fit: cover;" onerror="this.style.display='none'">
+                    {% endif %}
                 </div>
-                {% endif %}
+
                 <div>
                     <h6 class="fw-bold mb-0 text-accent">{{ p.username }}</h6>
                     <small class="text-muted" style="font-size: 0.8rem;">
@@ -373,15 +381,23 @@
             <div id="message-{{ message.id }}"
                 class="chat-bubble {% if message.sender == request.user %}me{% else %}other{% endif %}">
 
-                {% if message.sender.userinfo.image %}
-                <img src="{{ message.sender.userinfo.image.url }}"
-                    class="msg-avatar {% if message.sender == request.user %}right{% else %}left{% endif %}">
-                {% else %}
-                <div class="msg-avatar {% if message.sender == request.user %}right{% else %}left{% endif %} d-flex align-items-center justify-content-center fw-bold text-white small"
-                    style="background: #ccc; font-size: 10px;">
-                    {{ message.sender.username|slice:":1"|upper }}
+                <!-- Stacked Avatar for Message -->
+                <div class="msg-avatar {% if message.sender == request.user %}right{% else %}left{% endif %} position-absolute rounded-circle shadow-sm overflow-hidden"
+                    style="background: #ccc;">
+
+                    <!-- 1. Initials Background -->
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center fw-bold text-white small"
+                        style="font-size: 10px; background: {% if message.sender == request.user %}#667eea{% else %}#ccc{% endif %};">
+                        {{ message.sender.username|slice:":1"|upper }}
+                    </div>
+
+                    <!-- 2. Image Overlay -->
+                    {% if message.sender.userinfo.image %}
+                    <img src="{{ message.sender.userinfo.image.url }}"
+                        class="position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover;"
+                        onerror="this.style.display='none'">
+                    {% endif %}
                 </div>
-                {% endif %}
 
                 {% if message.sender != request.user %}
                 <div class="fw-bold mb-1" style="font-size: 0.75rem; color: var(--accent);">
