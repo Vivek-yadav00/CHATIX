@@ -15,15 +15,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
-from django.conf.urls.static import static
+from django.views.static import serve
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('chatix.urls')),
-]
 
-# Serve media files in all environments
-# Note: For production with many files, consider using cloud storage (S3, Cloudinary)
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Serve media files in ALL environments (including production)
+    # django.conf.urls.static.static() returns empty list when DEBUG=False,
+    # so we use re_path + serve directly to ensure media always works.
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+]

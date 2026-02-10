@@ -82,14 +82,29 @@ ASGI_APPLICATION = 'DjangoChat.asgi.application'
 REDIS_URL = os.environ.get('REDIS_URL')
 
 if REDIS_URL:
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {
-                'hosts': [REDIS_URL],
-            },
+    # Render Redis uses rediss:// (SSL) - needs special config
+    if REDIS_URL.startswith('rediss://'):
+        import ssl
+        CHANNEL_LAYERS = {
+            'default': {
+                'BACKEND': 'channels_redis.core.RedisChannelLayer',
+                'CONFIG': {
+                    'hosts': [{
+                        'address': REDIS_URL,
+                        'ssl_cert_reqs': ssl.CERT_NONE,  # Required for Render Redis
+                    }],
+                },
+            }
         }
-    }
+    else:
+        CHANNEL_LAYERS = {
+            'default': {
+                'BACKEND': 'channels_redis.core.RedisChannelLayer',
+                'CONFIG': {
+                    'hosts': [REDIS_URL],
+                },
+            }
+        }
 else:
     # Fallback for local development (not suitable for production with multiple workers)
     CHANNEL_LAYERS = {
