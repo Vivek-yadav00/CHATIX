@@ -39,9 +39,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'chatix',
     'channels',
-    'cloudinary_storage',
-    'cloudinary',
 ]
+
+# Only add Cloudinary apps if credentials are configured (production)
+if os.environ.get('CLOUDINARY_CLOUD_NAME'):
+    INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
 
 # ===============================
 # MIDDLEWARE  (IMPORTANT ORDER)
