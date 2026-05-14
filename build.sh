@@ -15,4 +15,16 @@ python manage.py migrate --no-input
 export DJANGO_SUPERUSER_USERNAME="Light"
 export DJANGO_SUPERUSER_PASSWORD="admin99"
 
-python manage.py createsuperuser --no-input || echo "Superuser already exists, skipping."
+# Create superuser using Python to bypass the email requirement
+python manage.py shell -c "
+from django.contrib.auth import get_user_model
+import os
+User = get_user_model()
+username = os.environ.get('DJANGO_SUPERUSER_USERNAME')
+password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
+if not User.objects.filter(username=username).exists():
+    User.objects.create_superuser(username=username, email='', password=password)
+    print('Superuser created successfully.')
+else:
+    print('Superuser already exists, skipping.')
+"
